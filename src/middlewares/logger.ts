@@ -1,6 +1,4 @@
-import { Response, NextFunction } from 'express';
-
-import { createLogger } from '../modules';
+import { Response, NextFunction, RequestHandler } from 'express';
 import { IExtendedRequest } from '../interfaces';
 import { Logger } from 'winston';
 
