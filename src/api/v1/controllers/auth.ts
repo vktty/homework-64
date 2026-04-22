@@ -11,6 +11,22 @@ export class AuthController {
 	constructor({ authService }: AuthConstructorParams) {
 		this.authService = authService;
 	}
+	async getMe(req: IExtendedRequest, res: Response, next: NextFunction) {
+		this.authService
+			.getMe(req)
+			.then((user) => {
+				return res
+					.status(StatusCodes.OK)
+					.json({ data: user, error: {} });
+			})
+			.catch((error) => {
+				req.log?.error(
+					'An error occurred while signing in!',
+					{ error },
+				);
+				next(error);
+			});
+	}
 
 	async SignIn(req: IExtendedRequest, res: Response, next: NextFunction) {
 		const { email, password } = req.body;
@@ -52,5 +68,24 @@ export class AuthController {
 				);
 				next(error);
 			});
+	}
+	async SighOut(
+		req: IExtendedRequest,
+		res: Response,
+		next: NextFunction,
+	) {
+		try {
+			res.clearCookie('token', {
+				httpOnly: true,
+			})
+				.status(StatusCodes.OK)
+				.json({ message: 'Signed out!' });
+		} catch (error) {
+			req?.log?.error(
+				'An error occurred while signing out!',
+				{ error },
+			);
+			next(error);
+		}
 	}
 }

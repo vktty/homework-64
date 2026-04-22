@@ -3,6 +3,7 @@ import { body } from 'express-validator';
 import { AuthRepository } from '../../../repositories';
 import { AuthService } from '../../../services';
 import { AuthController } from '../controllers';
+import { authVerification } from '../../../middlewares';
 
 export const auth = () => {
 	const router = Router();
@@ -11,6 +12,7 @@ export const auth = () => {
 	const service = new AuthService({ repository });
 	const controller = new AuthController({ authService: service });
 
+	router.get('/me', authVerification, controller.getMe.bind(controller));
 	router.post(
 		'/sign-in',
 		[
@@ -55,5 +57,6 @@ export const auth = () => {
 		controller.SignUp.bind(controller),
 	);
 
+	router.post('/sign-out', controller.SighOut.bind(controller));
 	return router;
 };

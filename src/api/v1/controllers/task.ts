@@ -21,7 +21,7 @@ export class TaskController {
 			.then((tasks) => {
 				return res
 					.status(StatusCodes.OK)
-					.json({ data: tasks, error: {} });
+					.json({ data: tasks });
 			})
 			.catch((error) => {
 				req.log?.error(
@@ -42,11 +42,11 @@ export class TaskController {
 				error: 'Invalid taskId',
 			});
 		this.taskService
-			.findById(taskId)
+			.findById(req, taskId)
 			.then((task) => {
 				return res
 					.status(StatusCodes.OK)
-					.json({ data: task, error: {} });
+					.json({ data: task });
 			})
 			.catch((error) => {
 				req.log?.error(
@@ -64,11 +64,11 @@ export class TaskController {
 	) {
 		const data = req.body;
 		this.taskService
-			.create(data)
+			.create(req, data)
 			.then((task) => {
 				return res
 					.status(StatusCodes.CREATED)
-					.json({ data: task, error: {} });
+					.json({ data: task });
 			})
 			.catch((error) => {
 				req.log?.error(
@@ -85,23 +85,52 @@ export class TaskController {
 		next: NextFunction,
 	) {
 		const { taskId } = req.params;
+		const data = req.body;
 		if (!taskId || Array.isArray(taskId))
 			return res
 				.status(StatusCodes.INTERNAL_SERVER_ERROR)
 				.json({
 					error: 'Invalid taskId',
 				});
-		const data = req.body;
 		this.taskService
-			.update(taskId, data)
+			.update(req, taskId, data)
 			.then((task) => {
 				return res
 					.status(StatusCodes.OK)
-					.json({ data: task, error: {} });
+					.json({ data: task });
 			})
 			.catch((error) => {
 				req.log?.error(
 					'An error occurred while updating task!',
+					{ error },
+				);
+				next(error);
+			});
+	}
+
+	async updateTaskWorkflow(
+		req: IExtendedRequest,
+		res: Response,
+		next: NextFunction,
+	) {
+		const { taskId } = req.params;
+		const data = req.body;
+		if (!taskId || Array.isArray(taskId))
+			return res
+				.status(StatusCodes.INTERNAL_SERVER_ERROR)
+				.json({
+					error: 'Invalid taskId',
+				});
+		this.taskService
+			.update(req, taskId, data)
+			.then((task) => {
+				return res
+					.status(StatusCodes.OK)
+					.json({ data: task });
+			})
+			.catch((error) => {
+				req.log?.error(
+					"An error occurred while updating task's workflow!",
 					{ error },
 				);
 				next(error);
@@ -121,11 +150,10 @@ export class TaskController {
 					error: 'Invalid taskId',
 				});
 		this.taskService
-			.delete(taskId)
+			.delete(req, taskId)
 			.then(() => {
-				return res.status(StatusCodes.OK).json({
-					data: {},
-					error: {},
+				return res.status(StatusCodes.DELETED).json({
+					message: `Task ${taskId} deleted successfully!`,
 				});
 			})
 			.catch((error) => {

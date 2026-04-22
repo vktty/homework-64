@@ -9,7 +9,7 @@ export abstract class BaseRepository implements IRepository {
 		this.resource = resource;
 	}
 
-	private get db() {
+	protected get db() {
 		const client = getClient();
 		if (!client) throw new Error('Client not initialazed!');
 		return client;
@@ -45,7 +45,7 @@ export abstract class BaseRepository implements IRepository {
 	}
 	public async update<T, R>(id: string, data: T): Promise<R> {
 		return this.db
-			.put(`/${this.resource}/${id}`, data)
+			.patch(`/${this.resource}/${id}`, data)
 			.then((response) => response.data);
 	}
 	public async delete(id: string): Promise<void> {

@@ -1,6 +1,7 @@
 import { NextFunction, Response } from 'express';
 import { IExtendedRequest, StatusCodes } from '../../../interfaces';
 import { BoardService } from '../../../services';
+import { tasks } from '../routes/tasks';
 
 type BoardConstructorParams = {
 	boardService: BoardService;
@@ -21,7 +22,7 @@ export class BoardController {
 			.then((boards) => {
 				return res
 					.status(StatusCodes.OK)
-					.json({ data: boards, error: {} });
+					.json({ data: boards });
 			})
 			.catch((error) => {
 				req.log?.error(
@@ -49,7 +50,6 @@ export class BoardController {
 			.then((tasks) => {
 				return res.status(StatusCodes.OK).json({
 					data: tasks,
-					error: {},
 				});
 			})
 			.catch((error) => {
@@ -73,11 +73,11 @@ export class BoardController {
 					error: 'Invalid boardId',
 				});
 		this.boardService
-			.findById(boardId)
+			.findById(req, boardId)
 			.then((board) => {
 				return res
 					.status(StatusCodes.OK)
-					.json({ data: board, error: {} });
+					.json({ data: board });
 			})
 			.catch((error) => {
 				req.log?.error(
@@ -95,11 +95,11 @@ export class BoardController {
 	) {
 		const data = req.body;
 		this.boardService
-			.create(data)
+			.create(req, data)
 			.then((board) => {
 				return res
 					.status(StatusCodes.CREATED)
-					.json({ data: board, error: {} });
+					.json({ data: board });
 			})
 			.catch((error) => {
 				req.log?.error(
@@ -125,11 +125,11 @@ export class BoardController {
 
 		const data = req.body;
 		this.boardService
-			.update(boardId, data)
+			.update(req, boardId, data)
 			.then((board) => {
 				return res
 					.status(StatusCodes.OK)
-					.json({ data: board, error: {} });
+					.json({ data: board });
 			})
 			.catch((error) => {
 				req.log?.error(
@@ -153,11 +153,10 @@ export class BoardController {
 					error: 'Invalid boardId',
 				});
 		this.boardService
-			.delete(boardId)
+			.delete(req, boardId)
 			.then(() => {
-				return res.status(StatusCodes.OK).json({
-					data: {},
-					error: {},
+				return res.status(StatusCodes.DELETED).json({
+					message: `Board ${boardId} deleted successfully!`,
 				});
 			})
 			.catch((error) => {

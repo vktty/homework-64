@@ -215,14 +215,6 @@
 			"id": "l1h7f56q-i8e4-j92w-h79r-h7f50p1q2r3s",
 			"title": "John's task #1",
 			"description": "Temporibus autem quibusdam et aut officiis debitis aut rerum necessitatibus saepe eveniet ut et voluptates repudiandae sint et molestiae non recusandae.",
-			"workflow": "todo",
-			"boardId": "82535b97-7da7-438a-bcd8-670cc0eba828",
-			"authorId": "b408d67c-7784-4324-8d31-d36bc2a14e0e"
-		},
-		{
-			"id": "m2i8g67r-j9f5-k03x-i80s-i8g61q2r3s4t",
-			"title": "John's task #2",
-			"description": "Itaque earum rerum hic tenetur a sapiente delectus, ut aut reiciendis voluptatibus maiores alias consequatur aut perferendis.",
 			"workflow": "progress",
 			"boardId": "82535b97-7da7-438a-bcd8-670cc0eba828",
 			"authorId": "b408d67c-7784-4324-8d31-d36bc2a14e0e"

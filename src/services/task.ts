@@ -1,18 +1,27 @@
+import { validationResult } from 'express-validator';
 import {
 	IBoard,
 	IExtendedRequest,
 	IRepository,
 	ITask,
+	ITaskRepository,
 	TaskUpdate,
+	WorkflowCode,
 } from '../interfaces';
-import { BadRequest, Forbidden, Notfound } from '../modules/erros';
+import {
+	BadRequest,
+	Forbidden,
+	Notfound,
+	ValidationError,
+} from '../modules/erros';
+import { transformWorkflow } from '../utils';
 
 type TaskConstructorParams = {
-	repository: IRepository;
+	repository: ITaskRepository;
 };
 
 export class TaskService {
-	private readonly repository: IRepository;
+	private readonly repository: ITaskRepository;
 	constructor({ repository }: TaskConstructorParams) {
 		this.repository = repository;
 	}
@@ -38,18 +47,102 @@ export class TaskService {
 		if (!tasks || tasks.length === 0)
 			throw new Notfound('Tasks not found!');
 
-		return tasks;
+		return tasks.map((task) => ({
+			...task,
+			workflow: transformWorkflow(
+				task.workflow as WorkflowCode,
+			),
+		}));
 	}
-	public async findById(id: string) {
-		return this.repository.findById(id);
+	public async findById(req: IExtendedRequest, id: string) {
+		const task = await this.repository.findById<ITask>(id);
+		if (!task) throw new Notfound('Task not found!');
+		if (task.authorId != req.user!.id)
+			throw new Forbidden(
+				'You are not the author of this task!',
+			);
+
+		return {
+			...task,
+			workflow: transformWorkflow(
+				task.workflow as WorkflowCode,
+			),
+		};
 	}
-	public async create(data: ITask) {
-		return this.repository.create(data);
+	public async create(req: IExtendedRequest, data: ITask) {
+		const authorId = req.user!.id;
+		const resultValidation = validationResult(req);
+
+		if (!resultValidation.isEmpty()) {
+			throw new ValidationError(
+				'Validation failed',
+				resultValidation.array(),
+			);
+		}
+		const createdTask = {
+			...data,
+			description: data.description || '',
+			workflow: data.workflow,
+			id: crypto.randomUUID(),
+			authorId,
+		};
+		return this.repository.create(createdTask);
 	}
-	public async update(id: string, data: TaskUpdate) {
-		return this.repository.update(id, data);
+	public async update(
+		req: IExtendedRequest,
+		id: string,
+		data: TaskUpdate,
+	) {
+		const task = await this.repository.findById<ITask>(id);
+		if (!task) throw new Notfound('Task not found!');
+		if (task.authorId != req.user!.id)
+			throw new Forbidden(
+				'You are not the author of this task!',
+			);
+
+		const updatedTask = await this.repository.update<
+			TaskUpdate,
+			ITask
+		>(id, data);
+		return {
+			...updatedTask,
+			workflow: transformWorkflow(
+				updatedTask.workflow as WorkflowCode,
+			),
+		};
 	}
-	public async delete(id: string) {
-		return this.repository.delete(id);
+	public async updateTaskWorkflow(
+		req: IExtendedRequest,
+		id: string,
+		data: TaskUpdate,
+	) {
+		const task = await this.repository.findById<ITask>(id);
+		if (!task) throw new Notfound('Task not found!');
+		if (task.authorId != req.user!.id)
+			throw new Forbidden(
+				'You are not the author of this task!',
+			);
+
+		const updatedTaskWorkflow =
+			await this.repository.updateTaskWorkflow<
+				TaskUpdate,
+				ITask
+			>(id, data);
+		return {
+			...updatedTaskWorkflow,
+			workflow: transformWorkflow(
+				updatedTaskWorkflow.workflow as WorkflowCode,
+			),
+		};
+	}
+
+	public async delete(req: IExtendedRequest, id: string) {
+		const task = await this.repository.findById<ITask>(id);
+		if (task.authorId != req.user!.id)
+			throw new Forbidden(
+				'You are not the author of this board!',
+			);
+		await this.repository.delete(id);
+		return null;
 	}
 }

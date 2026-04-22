@@ -36,7 +36,7 @@ export const board = () => {
 
 	router.route('/:boardId')
 		.get(controller.getBoardById.bind(controller))
-		.put(
+		.patch(
 			[body('name').trim(), body('description').trim()],
 			controller.updateBoard.bind(controller),
 		)

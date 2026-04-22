@@ -21,6 +21,7 @@ export const tasks = () => {
 					.notEmpty()
 					.withMessage('boardId is required!'),
 			],
+
 			controller.getTasks.bind(controller),
 		)
 		.post(
@@ -51,11 +52,15 @@ export const tasks = () => {
 			],
 			controller.getTaskById.bind(controller),
 		)
-		.put(
+		.patch(
 			[body('title').trim(), body('description').trim()],
 			controller.updateTask.bind(controller),
 		)
 		.delete(controller.deleteTask.bind(controller));
 
+	router.patch(
+		'/:taskId/workflow',
+		controller.updateTaskWorkflow.bind(controller),
+	);
 	return router;
 };

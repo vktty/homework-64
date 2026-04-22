@@ -23,6 +23,19 @@ export class AuthService {
 	constructor({ repository }: AuthConstructorParams) {
 		this.repository = repository;
 	}
+	public async getMe(req: IExtendedRequest) {
+		const userId = req.user!.id;
+		if (!userId) throw new Notfound('User with this ID not found!');
+		const user = await this.repository.findById<IUser>(userId);
+		if (!user) throw new Notfound('User not found!');
+
+		return {
+			id: user.id,
+			name: user.name,
+			email: user.email,
+			createdAt: user.createdAt,
+		};
+	}
 
 	public async createUser(
 		req: IExtendedRequest,
@@ -74,6 +87,15 @@ export class AuthService {
 		req: IExtendedRequest,
 		{ email, password }: Pick<IUser, 'email' | 'password'>,
 	) {
+		const resultValidation = validationResult(req);
+
+		if (!resultValidation.isEmpty()) {
+			throw new ValidationError(
+				'Validation failed',
+				resultValidation.array(),
+			);
+		}
+
 		const [existingUser] = await this.repository.findByQuery<IUser>(
 			{ email },
 		);

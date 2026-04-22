@@ -1,16 +1,20 @@
+import { validationResult } from 'express-validator';
 import {
 	BoardUpdate,
 	IBoard,
 	IExtendedRequest,
 	IRepository,
 	ITask,
+	WorkflowCode,
 } from '../interfaces';
 import {
 	BadRequest,
 	Forbidden,
 	Notfound,
 	Unauthorized,
+	ValidationError,
 } from '../modules/erros';
+import { transformWorkflow } from '../utils';
 
 type BoardConstructorParams = {
 	boardRepository: IRepository;
@@ -40,14 +44,7 @@ export class BoardService {
 	}
 	public async getAllBoardTasks(req: IExtendedRequest) {
 		const { boardId } = req.params;
-		const { boardId: boardIdQuery } = req.query;
-
-		if (boardId !== boardIdQuery)
-			throw new BadRequest(
-				'boardId in query must match params',
-			);
-
-		if (!boardId) throw new BadRequest('Board not found!');
+		if (!boardId) throw new BadRequest('Board ID not found!');
 		const board = await this.boardRepository.findById<IBoard>(
 			boardId as string,
 		);
@@ -66,18 +63,62 @@ export class BoardService {
 		if (!tasks || tasks.length === 0)
 			throw new Notfound('Tasks not found!');
 
-		return tasks;
+		return tasks.map((task) => ({
+			...task,
+			workflow: transformWorkflow(
+				task.workflow as WorkflowCode,
+			),
+		}));
 	}
-	public async findById(id: string) {
-		return this.boardRepository.findById(id);
+	public async findById(req: IExtendedRequest, id: string) {
+		const board = await this.boardRepository.findById<IBoard>(id);
+		if (!board) throw new Notfound('Board not found!');
+		if (board.authorId != req.user!.id)
+			throw new Forbidden(
+				'You are not the author of this board!',
+			);
+
+		return board;
 	}
-	public async create(data: IBoard) {
-		return this.boardRepository.create(data);
+	public async create(req: IExtendedRequest, data: IBoard) {
+		const authorId = req.user!.id;
+		const resultValidation = validationResult(req);
+
+		if (!resultValidation.isEmpty()) {
+			throw new ValidationError(
+				'Validation failed',
+				resultValidation.array(),
+			);
+		}
+		const createdBoard = {
+			...data,
+			id: crypto.randomUUID(),
+			authorId,
+		};
+
+		return await this.boardRepository.create(createdBoard);
 	}
-	public async update(id: string, data: BoardUpdate) {
-		return this.boardRepository.update(id, data);
+	public async update(
+		req: IExtendedRequest,
+		id: string,
+		data: BoardUpdate,
+	) {
+		const board = await this.boardRepository.findById<IBoard>(id);
+		if (!board) throw new Notfound('Board not found!');
+		if (board.authorId != req.user!.id)
+			throw new Forbidden(
+				'You are not the author of this board!',
+			);
+
+		return await this.boardRepository.update(id, data);
 	}
-	public async delete(id: string) {
-		return this.boardRepository.delete(id);
+	public async delete(req: IExtendedRequest, id: string) {
+		const board = await this.boardRepository.findById<IBoard>(id);
+		if (board.authorId != req.user!.id)
+			throw new Forbidden(
+				'You are not the author of this board!',
+			);
+		await this.boardRepository.delete(id);
+		return null;
 	}
 }
