@@ -57,6 +57,6 @@ export const auth = () => {
 		controller.SignUp.bind(controller),
 	);
 
-	router.post('/sign-out', controller.SighOut.bind(controller));
+	router.post('/sign-out', controller.SignOut.bind(controller));
 	return router;
 };

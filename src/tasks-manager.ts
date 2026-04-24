@@ -1,8 +1,6 @@
 import express, { NextFunction, Response } from 'express';
 import path from 'node:path';
 import cookieParser from 'cookie-parser';
-import session from 'express-session';
-import passport from 'passport';
 import cors from 'cors';
 
 import { handleErrors, requestLogger } from './middlewares';
@@ -26,17 +24,7 @@ export const createApp = ({ logFilePath }: IApp) => {
 
 	app.use(express.json());
 	app.use(cookieParser());
-	app.use(
-		session({
-			name: 'session',
-			secret: [process.env.SECRET_SESSION_KEY!],
-			resave: false,
-			cookie: { httpOnly: true, secure: true },
-		}),
-	);
 	app.use(requestLogger(logFilePath));
-	app.use(passport.initialize());
-	app.use(passport.session());
 
 	app.get('/', (req: IExtendedRequest, res: Response) => {
 		res.status(StatusCodes.OK).json({

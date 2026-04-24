@@ -37,6 +37,10 @@ export class AuthController {
 					.status(StatusCodes.OK)
 					.cookie('token', user.token, {
 						httpOnly: true,
+						secure:
+							process.env.NODE_ENV ===
+							'production',
+						maxAge: 7 * 24 * 60 * 60 * 1000,
 					})
 					.json({ data: user, error: {} });
 			})
@@ -58,6 +62,10 @@ export class AuthController {
 					.status(StatusCodes.OK)
 					.cookie('token', user.token, {
 						httpOnly: true,
+						secure:
+							process.env.NODE_ENV ===
+							'production',
+						maxAge: 7 * 24 * 60 * 60 * 1000,
 					})
 					.json({ data: user, error: {} });
 			})
@@ -69,7 +77,7 @@ export class AuthController {
 				next(error);
 			});
 	}
-	async SighOut(
+	async SignOut(
 		req: IExtendedRequest,
 		res: Response,
 		next: NextFunction,
@@ -77,6 +85,7 @@ export class AuthController {
 		try {
 			res.clearCookie('token', {
 				httpOnly: true,
+				secure: process.env.NODE_ENV === 'production',
 			})
 				.status(StatusCodes.OK)
 				.json({ message: 'Signed out!' });
